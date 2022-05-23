@@ -1,0 +1,38 @@
+- hosts: workers
+  user: cloud_user
+  become: yes
+  tasks:
+    - name: "Installing Docker and NPM for local build"
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - npm
+    - name: "Configuring docker-ce repo"
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: 0644
+    - name: " Installing Docker"
+      yum:
+        name: docker-ce
+        state: present
+    - name: " Starting and Enabling Docker service"
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Clone a github repository
+      git:
+        repo: https://github.com/sbizinov/test_tast.git
+        dest: /home/cloud_user/
+        clone: yes
+        update: yes
+    - name: Build a docker image
+      docker_image:
+        path: /home/cloud_user/test_task/task_1
+        name: dockerfile
+        tag: v1
