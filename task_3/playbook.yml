@@ -1,0 +1,20 @@
+- hosts: workers
+  user: cloud_user
+  become: true
+  tasks:
+    - copy:
+        src: iptables.sh
+        dest: /tmp/iptables.sh
+        owner: root
+        group: root
+        mode: '0500'
+    - copy:
+        src: iptables-setup.service 
+        dest: /etc/systemd/system/iptables-setup.service 
+        owner: root
+        group: root
+        mode: '0644'
+    - systemd:
+        name: "iptables-setup.service"
+        state: started
+        enabled: true
