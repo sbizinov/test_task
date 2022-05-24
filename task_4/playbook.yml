@@ -1,0 +1,67 @@
+- hosts: workers
+  user: ansible
+  become: yes
+  vars:
+    repo_url: https://github.com/sbizinov/test_task.git
+    project_path: /opt/build/
+  tasks:
+    - name: "Installing Docker and NPM for local build"
+      yum:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - git
+        - python-docker-py
+        - python3
+        - docker-compose
+      tags:
+        - install
+    - name: "Configuring docker-ce repo"
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: 0644
+    - name: " Installing Docker"
+      yum:
+        name: docker-ce
+        state: present
+    - name: " Starting and Enabling Docker service"
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Clone a github repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ project_path }}"
+        clone: yes
+        update: yes
+    - name: Install Python packages
+      remote_user: ansbile
+      pip: 
+        name: "{{ item }}"
+        executable: pip3
+        state: latest
+      with_items:
+        - pip
+        - docker-compose
+      tags:
+        - install
+        - python
+    - name: Install compose.
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose 
+        mode: 'u+x,g+x'
+      tags:
+        - compose
+    - name: Launch compose
+      docker_compose:
+        project_src: "{{ project_path }}/task_4"
+        files:
+        - docker-compose.yml
+      tags: 
+        - launch
