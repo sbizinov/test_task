@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      priorityClassName: standby
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-config
+      containers:
+      - name: backend
+        image: {{ .Values.werf.image.backend }}
+        command: ["php-fpm"]
+      - name: frontend
+        image: {{ .Values.werf.image.frontend }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Chart.Name }}-nginx
+  labels:
+    app: {{ $.Chart.Name }}
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    protocol: TCP
+    name: https
+
+

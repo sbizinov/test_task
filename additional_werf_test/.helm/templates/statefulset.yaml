@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}-db
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-db
+  serviceName: {{ .Chart.Name }}-db
+  replicas: 1
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-db
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: database
+        image: {{ .Values.werf.image.database }}
+        ports:
+        - containerPort: 3306
+          name: db
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ pluck .Values.global.env .Values.app.mysql.password | first | default .Values.app.mysql.password | quote }}
+        - name: MYSQL_DATABASE
+          value: {{ pluck .Values.global.env .Values.app.mysql.db | first | default .Values.app.mysql.db | quote }}
+  volumeClaimTemplates:
+  - metadata:
+      name: db
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-db
+  labels:
+    app: {{ .Chart.Name }}-db
+spec:
+  ports:
+  - port: 3306
+    name: db
+  clusterIP: None
+  selector:
+    app: {{ .Chart.Name }}-db

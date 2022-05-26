@@ -1,0 +1,6 @@
+app:
+  mysql:
+    db:
+      _default: password
+    password:
+      _default: onlineshop

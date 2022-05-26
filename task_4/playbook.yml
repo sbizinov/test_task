@@ -11,23 +11,13 @@
         state: latest
       with_items:
         - yum-utils
+        - epel-release
         - device-mapper-persistent-data
         - lvm2
         - git
-        - python-docker-py
         - python3
-        - docker-compose
       tags:
         - install
-    - name: "Configuring docker-ce repo"
-      get_url:
-        url: https://download.docker.com/linux/centos/docker-ce.repo
-        dest: /etc/yum.repos.d/docker-ce.repo
-        mode: 0644
-    - name: " Installing Docker"
-      yum:
-        name: docker-ce
-        state: present
     - name: " Starting and Enabling Docker service"
       service:
         name: docker
@@ -40,7 +30,6 @@
         clone: yes
         update: yes
     - name: Install Python packages
-      remote_user: ansbile
       pip: 
         name: "{{ item }}"
         executable: pip3
